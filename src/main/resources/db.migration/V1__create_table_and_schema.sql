@@ -5,5 +5,5 @@ CREATE TABLE url_shortener.url (
                                    original_url VARCHAR(2048) NOT NULL,
                                    shorter_url VARCHAR(255),
                                    status VARCHAR(50) NOT NULL,
-                                   message TEXT
+                                   description TEXT
 );

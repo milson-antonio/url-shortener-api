@@ -27,14 +27,14 @@ class UrlEntity (
     @Enumerated(EnumType.STRING)
     val status: UrlStatus,
 
-    @Column(name = "message")
-    val message: String?,
+    @Column(name = "description", columnDefinition = "TEXT", nullable = true, length = 1000000000)
+    val description: String?,
 ) {
     constructor() : this(
         id = UUID.randomUUID(),
         originalUrl = "",
         shorterUrl = null,
         status = UrlStatus.RECEIVED,
-        message = null
+        description = null
     )
 }

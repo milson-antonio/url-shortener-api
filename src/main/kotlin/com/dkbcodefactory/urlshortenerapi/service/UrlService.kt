@@ -3,61 +3,53 @@ package com.dkbcodefactory.urlshortenerapi.service
 import com.dkbcodefactory.urlshortenerapi.dtos.UrlAcknowledgement
 import com.dkbcodefactory.urlshortenerapi.dtos.UrlCreate
 import com.dkbcodefactory.urlshortenerapi.dtos.UrlStatus
-import com.dkbcodefactory.urlshortenerapi.kafka.UrlProducer
-import com.dkbcodefactory.urlshortenerapi.mapper.Mapper
-import com.dkbcodefactory.urlshortenerapi.repository.UrlRepository
-import jakarta.transaction.Transactional
 import org.springframework.stereotype.Service
 import java.util.UUID
-import java.util.concurrent.CompletableFuture
 import org.slf4j.LoggerFactory
 
 @Service
 class UrlService(
-    private val urlProducer: UrlProducer,
-    private val urlRepository: UrlRepository,
-    private val redisService: RedisService
+    private val persistenceService: UrlPersistenceService
 ) {
     private val logger = LoggerFactory.getLogger(UrlService::class.java)
 
-    @Transactional
-    public fun createShortUrl(urlCreate: UrlCreate): UrlAcknowledgement {
-        val cachedUrlOptional = redisService.findByOriginalUrl(urlCreate.originalUrl)
-
-        if (cachedUrlOptional.isPresent) {
-            logger.info("URL found in Redis cache: {}", urlCreate.originalUrl)
-            return cachedUrlOptional.get()
+     fun createShortUrl(urlCreate: UrlCreate): UrlAcknowledgement {
+        val existing = persistenceService.findUrlByOriginal(urlCreate.originalUrl)
+        if (existing != null) {
+            logger.info("Existing URL returned: {}", urlCreate.originalUrl)
+            return existing
         }
 
-        val existingUrlOptional = urlRepository.findByOriginalUrl(urlCreate.originalUrl)
-
-        if (existingUrlOptional.isPresent) {
-            val existingUrl = existingUrlOptional.get()
-            val urlAcknowledgement = Mapper.mapToUrlAcknowledgement(existingUrl)
-
-            redisService.saveUrl(urlAcknowledgement)
-            logger.info("URL found in database and cached in Redis: {}", urlCreate.originalUrl)
-
-            return urlAcknowledgement
-        }
-
-        val urlAcknowledgement = UrlAcknowledgement(
+        val newUrl = UrlAcknowledgement(
             id = UUID.randomUUID(),
             originalUrl = urlCreate.originalUrl,
             shorterUrl = "",
             status = UrlStatus.RECEIVED,
-            message = "URL created successfully"
+            description = urlCreate.description ?: "URL created successfully"
         )
 
-        CompletableFuture.runAsync {
-            redisService.saveUrl(urlAcknowledgement)
-            logger.info("New URL created and cached in Redis: {}", urlCreate.originalUrl)
-            val urlEntity = Mapper.mapToUrlEntity(urlAcknowledgement)
-            urlRepository.save(urlEntity)
-            urlProducer.sendUrl(urlAcknowledgement)
-        }
+        persistenceService.saveAndPublish(newUrl)
 
-        return urlAcknowledgement
+        return newUrl
     }
 
+    fun findByShortUrl(shorterUrl: String): UrlAcknowledgement? {
+        logger.info("Finding URL by short URL: {}", shorterUrl)
+        return persistenceService.findUrlByShortUrl(shorterUrl)
+    }
+
+    fun findById(id: UUID): UrlAcknowledgement? {
+        logger.info("Finding URL by ID: {}", id)
+        return persistenceService.findById(id)
+    }
+
+    fun deleteById(id: UUID) {
+        logger.info("Deleting URL by ID: {}", id)
+        persistenceService.deleteById(id)
+    }
+
+    fun findAllPaginated(page: Int = 0, size: Int = 10): List<UrlAcknowledgement> {
+        logger.info("Finding all URLs with pagination: page={}, size={}", page, size)
+        return persistenceService.findAllPaginated(page, size)
+    }
 }

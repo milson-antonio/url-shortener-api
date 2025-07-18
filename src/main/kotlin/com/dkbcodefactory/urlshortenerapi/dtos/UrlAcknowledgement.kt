@@ -7,4 +7,4 @@ class UrlAcknowledgement(val id: UUID,
                          val originalUrl: String,
                          val shorterUrl: String?,
                          val status: UrlStatus,
-                         val message: String?)
+                         val description: String?)

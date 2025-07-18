@@ -11,7 +11,7 @@ class Mapper {
                 originalUrl = urlAcknowledgement.originalUrl,
                 shorterUrl = urlAcknowledgement.shorterUrl,
                 status = urlAcknowledgement.status,
-                message = urlAcknowledgement.message
+                description = urlAcknowledgement.description
             )
         }
 
@@ -21,7 +21,7 @@ class Mapper {
                 originalUrl = urlEntity.originalUrl,
                 shorterUrl = urlEntity.shorterUrl,
                 status = urlEntity.status,
-                message = urlEntity.message
+                description = urlEntity.description
             )
         }
     }
