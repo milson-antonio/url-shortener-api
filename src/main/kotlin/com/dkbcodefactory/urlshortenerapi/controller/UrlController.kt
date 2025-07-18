@@ -36,17 +36,15 @@ class UrlController(private val urlService: UrlService) {
         return ResponseEntity.created(location).body(urlAcknowledgement)
     }
 
-    @GetMapping("/{shorterUrl}")
-    fun redirectToOriginalUrl(@PathVariable shorterUrl: String): ResponseEntity<UrlAcknowledgement> {
+    @GetMapping
+    fun redirectToOriginalUrl(@RequestParam shorterUrl: String): ResponseEntity<UrlAcknowledgement> {
         val urlAcknowledgement = urlService.findByShortUrl(shorterUrl)
-            ?: return ResponseEntity.notFound().build()
         return ResponseEntity.status(HttpStatus.FOUND).body(urlAcknowledgement)
     }
 
     @GetMapping("/{id}")
     fun redirectToOriginalUrlById(@PathVariable id: UUID): ResponseEntity<UrlAcknowledgement> {
         val urlAcknowledgement = urlService.findById(id)
-            ?: return ResponseEntity.notFound().build()
         return ResponseEntity.status(HttpStatus.FOUND).body(urlAcknowledgement)
     }
 
@@ -63,5 +61,4 @@ class UrlController(private val urlService: UrlService) {
     ): ResponseEntity<List<UrlAcknowledgement>> {
         return ResponseEntity.ok(urlService.findAllPaginated(page, size))
     }
-
 }

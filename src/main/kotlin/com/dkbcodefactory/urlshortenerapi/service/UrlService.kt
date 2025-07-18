@@ -3,6 +3,7 @@ package com.dkbcodefactory.urlshortenerapi.service
 import com.dkbcodefactory.urlshortenerapi.dtos.UrlAcknowledgement
 import com.dkbcodefactory.urlshortenerapi.dtos.UrlCreate
 import com.dkbcodefactory.urlshortenerapi.dtos.UrlStatus
+import com.dkbcodefactory.urlshortenerapi.exceptions.UrlNotFoundException
 import org.springframework.stereotype.Service
 import java.util.UUID
 import org.slf4j.LoggerFactory
@@ -33,18 +34,22 @@ class UrlService(
         return newUrl
     }
 
-    fun findByShortUrl(shorterUrl: String): UrlAcknowledgement? {
+    fun findByShortUrl(shorterUrl: String): UrlAcknowledgement {
         logger.info("Finding URL by short URL: {}", shorterUrl)
         return persistenceService.findUrlByShortUrl(shorterUrl)
+            ?: throw UrlNotFoundException("URL with short URL '$shorterUrl' not found")
     }
 
-    fun findById(id: UUID): UrlAcknowledgement? {
+    fun findById(id: UUID): UrlAcknowledgement {
         logger.info("Finding URL by ID: {}", id)
         return persistenceService.findById(id)
+            ?: throw UrlNotFoundException("URL with ID '$id' not found")
     }
 
     fun deleteById(id: UUID) {
         logger.info("Deleting URL by ID: {}", id)
+        val url = persistenceService.findById(id)
+            ?: throw UrlNotFoundException("URL with ID '$id' not found")
         persistenceService.deleteById(id)
     }
 
