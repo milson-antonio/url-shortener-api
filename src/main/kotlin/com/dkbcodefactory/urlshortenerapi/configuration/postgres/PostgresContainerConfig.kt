@@ -1,4 +1,4 @@
-package com.dkbcodefactory.urlshortenerapi.configuration
+package com.dkbcodefactory.urlshortenerapi.configuration.postgres
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration

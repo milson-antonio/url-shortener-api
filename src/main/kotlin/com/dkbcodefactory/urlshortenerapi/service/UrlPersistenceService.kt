@@ -72,10 +72,17 @@ class UrlPersistenceService(
     @Transactional
     fun saveAndPublish(urlAcknowledgement: UrlAcknowledgement) {
         CompletableFuture.runAsync {
-            redisService.saveUrl(urlAcknowledgement)
-            urlRepository.save(Mapper.mapToUrlEntity(urlAcknowledgement))
-            urlProducer.sendUrl(urlAcknowledgement)
-            logger.info("New URL persisted and sent: {}", urlAcknowledgement.originalUrl)
+            try {
+                redisService.saveUrl(urlAcknowledgement)
+                urlRepository.save(Mapper.mapToUrlEntity(urlAcknowledgement))
+                urlProducer.sendUrl(urlAcknowledgement)
+                logger.info("New URL persisted and sent: {}", urlAcknowledgement.originalUrl)
+            } catch (ex: Exception) {
+                logger.error("Error in saveAndPublish for URL {}: {}", 
+                    urlAcknowledgement.originalUrl, ex.message, ex)
+                // The URL is already saved to Redis and DB, so we don't need to roll back
+                // The Kafka producer will retry sending the message
+            }
         }
     }
 
